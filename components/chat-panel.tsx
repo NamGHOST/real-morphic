@@ -1,25 +1,28 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import type { AI, UIState } from '@/app/actions'
 import { useUIState, useActions, useAIState } from 'ai/rsc'
 import { cn } from '@/lib/utils'
 import { UserMessage } from './user-message'
 import { Button } from './ui/button'
-import { ArrowRight, Plus } from 'lucide-react'
+import { ArrowRight, Plus, Image, ImageOff } from 'lucide-react'
 import { EmptyScreen } from './empty-screen'
 import Textarea from 'react-textarea-autosize'
 import { generateId } from 'ai'
 import { useAppState } from '@/lib/utils/app-state'
+import { useTokenManager } from '@/lib/hooks/use-token-manager'
 
 interface ChatPanelProps {
   messages: UIState
   query?: string
+  chatId?: string
 }
 
-export function ChatPanel({ messages, query }: ChatPanelProps) {
+export function ChatPanel({ messages, query, chatId }: ChatPanelProps) {
   const [input, setInput] = useState('')
+  const [includeImages, setIncludeImages] = useState(true)
   const [showEmptyScreen, setShowEmptyScreen] = useState(false)
   const [, setMessages] = useUIState<typeof AI>()
   const [aiMessage, setAIMessage] = useAIState<typeof AI>()
@@ -28,28 +31,43 @@ export function ChatPanel({ messages, query }: ChatPanelProps) {
   const router = useRouter()
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const isFirstRender = useRef(true) // For development environment
+  const { getToken } = useTokenManager({})
 
-  async function handleQuerySubmit(query: string, formData?: FormData) {
-    setInput(query)
-    setIsGenerating(true)
+  const handleQuerySubmit = useCallback(
+    async (query: string, formData?: FormData) => {
+      setInput(query)
+      setIsGenerating(true)
 
-    // Add user message to UI state
-    setMessages(currentMessages => [
-      ...currentMessages,
-      {
-        id: generateId(),
-        component: <UserMessage message={query} />
+      // Add user message to UI state
+      setMessages(currentMessages => [
+        ...currentMessages,
+        {
+          id: generateId(),
+          component: (
+            <UserMessage message={query} chatId={chatId} showShare={true} />
+          )
+        }
+      ])
+
+      const token = getToken()
+      // Submit and get response message
+      const data = formData || new FormData()
+      if (!formData) {
+        data.append('input', query)
+      } else {
+        if (token) {
+          formData.append('token', token)
+        }
       }
-    ])
+      const responseMessage = await submit(data)
 
-    // Submit and get response message
-    const data = formData || new FormData()
-    if (!formData) {
-      data.append('input', query)
-    }
-    const responseMessage = await submit(data)
-    setMessages(currentMessages => [...currentMessages, responseMessage])
-  }
+      if (responseMessage.id === '') {
+        router.push(`${process.env.NEXT_PUBLIC_IMOGENAI_URL}`)
+      }
+      setMessages(currentMessages => [...currentMessages, responseMessage])
+    },
+    [setInput, setIsGenerating, setMessages, getToken, router, submit, chatId]
+  )
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -170,6 +188,17 @@ export function ChatPanel({ messages, query }: ChatPanelProps) {
             onFocus={() => setShowEmptyScreen(true)}
             onBlur={() => setShowEmptyScreen(false)}
           />
+          <label className="absolute right-12 top-1/2 transform -translate-y-1/2">
+            <input
+              type="text"
+              name="include_images"
+              className="hidden"
+              value={includeImages ? 'true' : 'false'}
+              onChange={() => setIncludeImages(!includeImages)}
+              onClick={() => setIncludeImages(!includeImages)}
+            />
+            {includeImages ? <Image size={20} /> : <ImageOff size={20} />}
+          </label>
           <Button
             type="submit"
             size={'icon'}

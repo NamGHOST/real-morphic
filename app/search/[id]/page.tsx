@@ -2,6 +2,7 @@ import { notFound, redirect } from 'next/navigation'
 import { Chat } from '@/components/chat'
 import { getChat } from '@/lib/actions/chat'
 import { AI } from '@/app/actions'
+import { VerifyToken } from '@/components/verify-token'
 
 export const maxDuration = 60
 
@@ -19,25 +20,22 @@ export async function generateMetadata({ params }: SearchPageProps) {
 }
 
 export default async function SearchPage({ params }: SearchPageProps) {
-  const userId = 'anonymous'
-  const chat = await getChat(params.id, userId)
+  const chat = await getChat(params.id)
 
   if (!chat) {
     redirect('/')
   }
 
-  if (chat?.userId !== userId) {
-    notFound()
-  }
-
   return (
-    <AI
-      initialAIState={{
-        chatId: chat.id,
-        messages: chat.messages
-      }}
-    >
-      <Chat id={params.id} />
-    </AI>
+    <VerifyToken userId={chat?.userId}>
+      <AI
+        initialAIState={{
+          chatId: chat.id,
+          messages: chat.messages
+        }}
+      >
+        <Chat id={params.id} />
+      </AI>
+    </VerifyToken>
   )
 }

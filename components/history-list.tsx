@@ -1,4 +1,6 @@
-import React, { cache } from 'react'
+'use client'
+
+import React, { useCallback, useEffect, useState } from 'react'
 import HistoryItem from './history-item'
 import { Chat } from '@/lib/types'
 import { getChats } from '@/lib/actions/chat'
@@ -8,13 +10,21 @@ type HistoryListProps = {
   userId?: string
 }
 
-const loadChats = cache(async (userId?: string) => {
+const loadChats = async (userId?: string) => {
   return await getChats(userId)
-})
+}
 
 // Start of Selection
-export async function HistoryList({ userId }: HistoryListProps) {
-  const chats = await loadChats(userId)
+export function HistoryList({ userId }: HistoryListProps) {
+  const [chats, setChats] = useState<Chat[]>([])
+
+  const initialize = useCallback(async () => {
+    const cts = await loadChats(userId)
+    setChats(cts)
+  }, [userId])
+  useEffect(() => {
+    initialize()
+  }, [userId, initialize])
 
   return (
     <div className="flex flex-col flex-1 space-y-3 h-full">
@@ -30,7 +40,7 @@ export async function HistoryList({ userId }: HistoryListProps) {
         )}
       </div>
       <div className="mt-auto">
-        <ClearHistory empty={!chats?.length} />
+        <ClearHistory empty={!chats?.length} userId={userId as string} />
       </div>
     </div>
   )

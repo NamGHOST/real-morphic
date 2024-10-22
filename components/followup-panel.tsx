@@ -8,12 +8,14 @@ import type { AI } from '@/app/actions'
 import { UserMessage } from './user-message'
 import { ArrowRight } from 'lucide-react'
 import { useAppState } from '@/lib/utils/app-state'
+import { useTokenManager } from '@/lib/hooks/use-token-manager'
 
 export function FollowupPanel() {
   const [input, setInput] = useState('')
   const { submit } = useActions()
   const [, setMessages] = useUIState<typeof AI>()
   const { isGenerating, setIsGenerating } = useAppState()
+  const { getToken } = useTokenManager({})
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -24,6 +26,8 @@ export function FollowupPanel() {
     setInput('')
 
     const formData = new FormData(event.currentTarget as HTMLFormElement)
+    const token = getToken()
+    if (token) formData.append('token', token)
 
     const userMessage = {
       id: Date.now(),

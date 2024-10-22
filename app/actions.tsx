@@ -20,6 +20,7 @@ import RetrieveSection from '@/components/retrieve-section'
 import { VideoSearchSection } from '@/components/video-search-section'
 import { AnswerSection } from '@/components/answer-section'
 import { workflow } from '@/lib/actions/workflow'
+import { headers } from 'next/headers'
 
 const MAX_MESSAGES = 6
 
@@ -29,6 +30,14 @@ async function submit(
   retryMessages?: AIMessage[]
 ) {
   'use server'
+  const headersList = headers()
+
+  if (headersList.get('isOpen') === 'false') {
+    return {
+      id: ''
+    }
+  }
+  const userId = headersList.get('userId') || 'anonymous'
 
   const aiState = getMutableAIState<typeof AI>()
   const uiStream = createStreamableUI()
@@ -82,7 +91,8 @@ async function submit(
           content,
           type
         }
-      ]
+      ],
+      userId
     })
     messages.push({
       role: 'user',
@@ -108,6 +118,7 @@ async function submit(
 
 export type AIState = {
   messages: AIMessage[]
+  userId?: string
   chatId: string
   isSharePage?: boolean
 }
@@ -152,9 +163,8 @@ export const AI = createAI<AIState, UIState>({
       return
     }
 
-    const { chatId, messages } = state
+    const { chatId, messages, userId } = state
     const createdAt = new Date()
-    const userId = 'anonymous'
     const path = `/search/${chatId}`
     const title =
       messages.length > 0
@@ -175,12 +185,12 @@ export const AI = createAI<AIState, UIState>({
     const chat: Chat = {
       id: chatId,
       createdAt,
-      userId,
+      userId: userId || 'anonymous',
       path,
       title,
       messages: updatedMessages
     }
-    await saveChat(chat)
+    await saveChat(chat, userId)
   }
 })
 
