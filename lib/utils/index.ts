@@ -46,7 +46,7 @@ export function getModel(useSubModel = false) {
     const openRouter = createOpenAI({
       apiKey: openRouterApiKey,
       baseURL: 'https://openrouter.ai/api/v1',
-      defaultHeaders: {
+      headers: {
         'HTTP-Referer': process.env.NEXTAUTH_URL || 'http://localhost:3000',
         'X-Title': process.env.SITE_NAME || 'AI Chat App'
       }
