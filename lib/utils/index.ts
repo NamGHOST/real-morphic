@@ -12,6 +12,8 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function getModel(useSubModel = false) {
+  const openRouterApiKey = process.env.OPENROUTER_API_KEY
+  const openRouterModel = process.env.OPENROUTER_MODEL || 'openai/4o-mini'
   const ollamaBaseUrl = process.env.OLLAMA_BASE_URL + '/api'
   const ollamaModel = process.env.OLLAMA_MODEL
   const ollamaSubModel = process.env.OLLAMA_SUB_MODEL
@@ -27,6 +29,7 @@ export function getModel(useSubModel = false) {
   const groqApiModel = process.env.GROQ_API_MODEL
 
   if (
+    !openRouterApiKey &&
     !(ollamaBaseUrl && ollamaModel) &&
     !openaiApiKey &&
     !googleApiKey &&
@@ -34,9 +37,24 @@ export function getModel(useSubModel = false) {
     !(azureApiKey && azureResourceName)
   ) {
     throw new Error(
-      'Missing environment variables for Ollama, OpenAI, Azure OpenAI, Google or Anthropic'
+      'Missing environment variables for OpenRouter, Ollama, OpenAI, Azure OpenAI, Google or Anthropic'
     )
   }
+
+  // OpenRouter (first priority)
+  if (openRouterApiKey) {
+    const openRouter = createOpenAI({
+      apiKey: openRouterApiKey,
+      baseURL: 'https://openrouter.ai/api/v1',
+      defaultHeaders: {
+        'HTTP-Referer': process.env.NEXTAUTH_URL || 'http://localhost:3000',
+        'X-Title': process.env.SITE_NAME || 'AI Chat App'
+      }
+    })
+
+    return openRouter.chat(openRouterModel)
+  }
+
   // Ollama
   if (ollamaBaseUrl && ollamaModel) {
     const ollama = createOllama({ baseURL: ollamaBaseUrl })
