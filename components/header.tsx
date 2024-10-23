@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { Suspense } from 'react'
 import { ModeToggle } from './mode-toggle'
 import { IconLogo } from './ui/icons'
 import { cn } from '@/lib/utils'
@@ -15,7 +15,9 @@ export const Header: React.FC = () => {
       </div>
       <div className="flex gap-0.5">
         <ModeToggle />
-        <HistoryContainer location="header" />
+        <Suspense>
+          <HistoryContainer location="header" />
+        </Suspense>
       </div>
     </header>
   )
