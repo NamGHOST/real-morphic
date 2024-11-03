@@ -4,7 +4,7 @@ import { createOllama } from 'ollama-ai-provider'
 import { createOpenAI } from '@ai-sdk/openai'
 import { createAzure } from '@ai-sdk/azure'
 import { google } from '@ai-sdk/google'
-import { anthropic } from '@ai-sdk/anthropic'
+import { createAnthropic } from '@ai-sdk/anthropic'
 import { CoreMessage } from 'ai'
 
 export function cn(...inputs: ClassValue[]) {
@@ -13,7 +13,7 @@ export function cn(...inputs: ClassValue[]) {
 
 export function getModel(useSubModel = false) {
   const openRouterApiKey = process.env.OPENROUTER_API_KEY
-  const openRouterModel = process.env.OPENROUTER_MODEL || 'openai/4o-mini'
+  const openRouterModel = process.env.OPENROUTER_MODEL || 'openai/gpt-4o-mini'
   const ollamaBaseUrl = process.env.OLLAMA_BASE_URL + '/api'
   const ollamaModel = process.env.OLLAMA_MODEL
   const ollamaSubModel = process.env.OLLAMA_SUB_MODEL
@@ -25,9 +25,10 @@ export function getModel(useSubModel = false) {
   let azureDeploymentName = process.env.AZURE_DEPLOYMENT_NAME || 'gpt-4o'
   const googleApiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY
   const anthropicApiKey = process.env.ANTHROPIC_API_KEY
+  const anthropicBaseUrl = process.env.ANTHROPIC_BASE_URL
   const groqApiKey = process.env.GROQ_API_KEY
   const groqApiModel = process.env.GROQ_API_MODEL
-
+  const groqBaseUrl = process.env.GROQ_BASE_URL
   if (
     !openRouterApiKey &&
     !(ollamaBaseUrl && ollamaModel) &&
@@ -71,7 +72,11 @@ export function getModel(useSubModel = false) {
   }
 
   if (anthropicApiKey) {
-    return anthropic('claude-3-5-sonnet-20240620')
+    const client = createAnthropic({
+      apiKey: anthropicApiKey,
+      baseUrl: anthropicBaseUrl
+    })
+    return client.chat('claude-3-5-sonnet-20240620')
   }
 
   if (azureApiKey && azureResourceName) {
@@ -86,7 +91,7 @@ export function getModel(useSubModel = false) {
   if (groqApiKey && groqApiModel) {
     const groq = createOpenAI({
       apiKey: groqApiKey,
-      baseURL: 'https://api.groq.com/openai/v1'
+      baseURL: groqBaseUrl
     })
 
     return groq.chat(groqApiModel)
