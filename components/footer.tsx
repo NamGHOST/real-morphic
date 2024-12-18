@@ -1,6 +1,7 @@
 import React from 'react'
 import Link from 'next/link'
-import { SiDiscord, SiGithub, SiX } from 'react-icons/si'
+import { SiDiscord, SiGithub, SiX, } from 'react-icons/si'
+import { FaSquareThreads } from "react-icons/fa6"
 import { Button } from './ui/button'
 
 const Footer: React.FC = () => {
@@ -12,7 +13,7 @@ const Footer: React.FC = () => {
           size={'icon'}
           className="text-muted-foreground/50"
         >
-          <Link href="https://discord.gg/zRxaseCuGq" target="_blank">
+          <Link href="https://discord.gg/gxTXDeeTXD" target="_blank">
             <SiDiscord size={18} />
           </Link>
         </Button>
@@ -21,8 +22,8 @@ const Footer: React.FC = () => {
           size={'icon'}
           className="text-muted-foreground/50"
         >
-          <Link href="https://x.com/morphic_ai" target="_blank">
-            <SiX size={18} />
+          <Link href="https://www.threads.net/@imogenai.app" target="_blank">
+            <FaSquareThreads size={18} />
           </Link>
         </Button>
         <Button
@@ -30,9 +31,7 @@ const Footer: React.FC = () => {
           size={'icon'}
           className="text-muted-foreground/50"
         >
-          <Link href="https://git.new/morphic" target="_blank">
-            <SiGithub size={18} />
-          </Link>
+
         </Button>
       </div>
     </footer>
